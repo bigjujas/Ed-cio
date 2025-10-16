@@ -134,6 +134,45 @@ router.get('/interacoes', authAdmin, async (req, res) => {
   }
 });
 
+// Deletar produto
+router.delete('/produtos/:id', authAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('Tentando deletar produto:', id);
+    const connection = await createConnection();
+    
+    const result = await connection.query('DELETE FROM produtos WHERE id = $1', [id]);
+    console.log('Produto deletado, linhas afetadas:', result.rowCount);
+    
+    res.json({ message: 'Produto deletado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar produto:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Deletar interação
+router.delete('/interacoes/:id', authAdmin, async (req, res) => {
+  console.log('=== ROTA DELETE INTERACAO CHAMADA ===');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Params:', req.params);
+  
+  try {
+    const { id } = req.params;
+    console.log('Tentando deletar interação:', id);
+    const connection = await createConnection();
+    
+    const result = await connection.query('DELETE FROM interacoes WHERE id = $1', [id]);
+    console.log('Interação deletada, linhas afetadas:', result.rowCount);
+    
+    res.json({ message: 'Interação deletada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar interação:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Responder interação
 router.put('/interacoes/:id/responder', authAdmin, async (req, res) => {
   try {

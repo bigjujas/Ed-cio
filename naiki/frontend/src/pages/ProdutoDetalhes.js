@@ -3,19 +3,48 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { produtosAPI, interacoesAPI } from '../services/api';
 
+// Função auxiliar para analisar JSON de forma segura
+const parseJsonSeguro = (data) => {
+  // Se o dado já for um array, retorna ele mesmo
+  if (Array.isArray(data)) {
+    return data;
+  }
+  
+  // Trata valores nulos ou indefinidos
+  if (!data) {
+    return [];
+  }
+  
+  // Garante que é uma string antes de tentar o parse
+  const stringData = String(data).trim();
+
+  // Se é uma string separada por vírgulas (não JSON), processa diretamente
+  if (stringData.includes(',') && !stringData.startsWith('[') && !stringData.startsWith('{')) {
+    return stringData.split(',').map(item => item.trim());
+  }
+
+  // Tenta analisar como JSON
+  try {
+    return JSON.parse(stringData);
+  } catch (e) {
+    // Se for uma string simples sem vírgulas, retorna como array de um elemento
+    return [stringData];
+  }
+};
+
+
 const ProdutoDetalhes = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  
+
   const [produto, setProduto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalAberto, setModalAberto] = useState(false);
   const [tipoInteracao, setTipoInteracao] = useState('');
   const [formData, setFormData] = useState({
     conteudo: '',
-    nota: 5,
-    data_agendamento: ''
+    nota: 5
   });
 
   useEffect(() => {
@@ -44,24 +73,24 @@ const ProdutoDetalhes = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
-      await interacoesAPI.criar({
+      const dadosEnvio = {
         produto_id: id,
-        tipo: tipoInteracao,
-        ...formData
-      });
+        tipo: 'avaliacao',
+        conteudo: formData.conteudo,
+        nota: parseInt(formData.nota)
+      };
       
-      alert('Interação enviada com sucesso!');
+      await interacoesAPI.criar(dadosEnvio);
+      
+      alert('Avaliação enviada com sucesso!');
       setModalAberto(false);
-      setFormData({ conteudo: '', nota: 5, data_agendamento: '' });
-      
-      // Recarregar produto para atualizar avaliações
-      if (tipoInteracao === 'avaliacao') {
-        carregarProduto();
-      }
+      setFormData({ conteudo: '', nota: 5 });
+      carregarProduto();
     } catch (error) {
-      alert('Erro ao enviar interação');
+      console.error('Erro detalhado:', error.response?.data || error.message);
+      alert(`Erro ao enviar interação: ${error.response?.data?.error || error.message}`);
     }
   };
 
@@ -85,54 +114,52 @@ const ProdutoDetalhes = () => {
     return <div className="container">Produto não encontrado</div>;
   }
 
+  // --- Aplicação da correção ---
+  const tamanhosDisponiveis = parseJsonSeguro(produto.tamanhos);
+  const coresDisponiveis = parseJsonSeguro(produto.cores);
+  // -----------------------------
+
   return (
     <div className="container">
       <div className="produto-detalhes">
         <div className="produto-imagem">
           <img src={produto.imagem || '/placeholder-tenis.jpg'} alt={produto.nome} />
         </div>
-        
+
         <div className="produto-info">
           <h1>{produto.nome}</h1>
           <p className="marca">{produto.marca}</p>
           <p className="categoria">Categoria: {produto.categoria}</p>
-          
+
           <div className="avaliacao">
             <div className="estrelas">
               {renderEstrelas(Math.round(produto.avaliacao_media))}
             </div>
             <span>({produto.total_avaliacoes} avaliações)</span>
           </div>
-          
+
           <p className="preco">R$ {produto.preco}</p>
           <p className="descricao">{produto.descricao}</p>
-          
+
           <div className="tamanhos">
             <h3>Tamanhos disponíveis:</h3>
-            {JSON.parse(produto.tamanhos || '[]').map(tamanho => (
+            {/* USANDO A VARIÁVEL TRATADA */}
+            {tamanhosDisponiveis.map(tamanho => (
               <span key={tamanho} className="tamanho">{tamanho}</span>
             ))}
           </div>
-          
+
           <div className="cores">
             <h3>Cores disponíveis:</h3>
-            {JSON.parse(produto.cores || '[]').map(cor => (
+            {/* USANDO A VARIÁVEL TRATADA */}
+            {coresDisponiveis.map(cor => (
               <span key={cor} className="cor">{cor}</span>
             ))}
           </div>
-          
+
           <div className="acoes">
             <button onClick={() => abrirModal('avaliacao')} className="btn btn-primary">
               Avaliar Produto
-            </button>
-            <button onClick={() => abrirModal('proposta')} className="btn btn-secondary">
-              Fazer Proposta
-            </button>
-            <button onClick={() => abrirModal('agendamento')} className="btn btn-secondary">
-              Agendar Visita
-            </button>
-            <button onClick={() => abrirModal('reserva')} className="btn btn-primary">
-              Reservar
             </button>
           </div>
         </div>
@@ -163,13 +190,8 @@ const ProdutoDetalhes = () => {
       {modalAberto && (
         <div className="modal">
           <div className="modal-content">
-            <h3>
-              {tipoInteracao === 'avaliacao' && 'Avaliar Produto'}
-              {tipoInteracao === 'proposta' && 'Fazer Proposta'}
-              {tipoInteracao === 'agendamento' && 'Agendar Visita'}
-              {tipoInteracao === 'reserva' && 'Reservar Produto'}
-            </h3>
-            
+            <h3>Avaliar Produto</h3>
+
             <form onSubmit={handleSubmit}>
               {tipoInteracao === 'avaliacao' && (
                 <div className="form-group">
@@ -184,33 +206,16 @@ const ProdutoDetalhes = () => {
                   </select>
                 </div>
               )}
-              
-              {tipoInteracao === 'agendamento' && (
-                <div className="form-group">
-                  <label>Data e Hora:</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.data_agendamento}
-                    onChange={(e) => setFormData({...formData, data_agendamento: e.target.value})}
-                    required
-                  />
-                </div>
-              )}
-              
+
               <div className="form-group">
-                <label>
-                  {tipoInteracao === 'avaliacao' && 'Comentário:'}
-                  {tipoInteracao === 'proposta' && 'Sua proposta:'}
-                  {tipoInteracao === 'agendamento' && 'Observações:'}
-                  {tipoInteracao === 'reserva' && 'Observações:'}
-                </label>
+                <label>Comentário:</label>
                 <textarea
                   value={formData.conteudo}
                   onChange={(e) => setFormData({...formData, conteudo: e.target.value})}
                   required
                 />
               </div>
-              
+
               <div className="modal-actions">
                 <button type="submit" className="btn btn-primary">Enviar</button>
                 <button type="button" onClick={() => setModalAberto(false)} className="btn btn-secondary">

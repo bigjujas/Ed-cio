@@ -85,6 +85,26 @@ const AdminInteracoes = () => {
     return <div className="estrelas">{estrelas}</div>;
   };
 
+  const deletarInteracao = async (id) => {
+    console.log('=== DELETAR INTERACAO FRONTEND ===');
+    console.log('ID da interação:', id);
+    
+    if (window.confirm('Tem certeza que deseja excluir esta interação?')) {
+      try {
+        console.log('Chamando adminAPI.deletarInteracao com ID:', id);
+        const response = await adminAPI.deletarInteracao(id);
+        console.log('Resposta da API:', response);
+        alert('Interação excluída com sucesso!');
+        carregarInteracoes();
+      } catch (error) {
+        console.error('Erro completo:', error);
+        console.error('Status:', error.response?.status);
+        console.error('Data:', error.response?.data);
+        alert(`Erro ao excluir interação: ${error.response?.data?.error || error.message}`);
+      }
+    }
+  };
+
   if (!isAdmin) {
     return <div className="container">Acesso negado</div>;
   }
@@ -154,6 +174,13 @@ const AdminInteracoes = () => {
                   className="btn btn-primary"
                 >
                   {interacao.resposta_admin ? 'Editar Resposta' : 'Responder'}
+                </button>
+                <button 
+                  onClick={() => deletarInteracao(interacao.id)}
+                  className="btn btn-danger"
+                  style={{marginLeft: '0.5rem'}}
+                >
+                  Excluir
                 </button>
               </div>
             </div>

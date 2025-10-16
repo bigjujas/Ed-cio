@@ -21,7 +21,7 @@ const Header = () => {
             <li><Link to="/">Home</Link></li>
             <li><Link to="/produtos">Produtos</Link></li>
             {isAuthenticated && (
-              <li><Link to="/minhas-interacoes">Minhas Interações</Link></li>
+              <li><Link to="/minhas-interacoes">Minhas Avaliações</Link></li>
             )}
             {isAdmin && (
               <>

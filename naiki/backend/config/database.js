@@ -72,6 +72,15 @@ const initDatabase = async () => {
         WHEN duplicate_object THEN null;
       END $$;
     `);
+    
+    // Adicionar novo tipo 'carrinho' ao enum existente
+    await dbConnection.query(`
+      DO $$ BEGIN
+        ALTER TYPE tipo_interacao ADD VALUE IF NOT EXISTS 'carrinho';
+      EXCEPTION
+        WHEN others THEN null;
+      END $$;
+    `);
 
     await dbConnection.query(`
       DO $$ BEGIN
@@ -101,14 +110,26 @@ const initDatabase = async () => {
     // Inserir admin padrão
     const { v4: uuidv4 } = require('uuid');
     const bcrypt = require('bcryptjs');
-    const adminId = uuidv4();
-    const hashedPassword = await bcrypt.hash('admin123', 10);
     
-    await dbConnection.query(`
-      INSERT INTO administradores (id, nome, email, senha) 
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (email) DO NOTHING
-    `, [adminId, 'Administrador', 'admin@naiki.com', hashedPassword]);
+    // Verificar se admin já existe
+    const adminExists = await dbConnection.query(
+      'SELECT id FROM administradores WHERE email = $1',
+      ['admin@naiki.com']
+    );
+    
+    if (adminExists.rows.length === 0) {
+      const adminId = uuidv4();
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      
+      await dbConnection.query(`
+        INSERT INTO administradores (id, nome, email, senha) 
+        VALUES ($1, $2, $3, $4)
+      `, [adminId, 'Administrador NAIKI', 'admin@naiki.com', hashedPassword]);
+      
+      console.log('Administrador criado: admin@naiki.com / admin123');
+    } else {
+      console.log('Administrador já existe: admin@naiki.com / admin123');
+    }
 
     console.log('Banco de dados PostgreSQL inicializado com sucesso!');
   } catch (error) {

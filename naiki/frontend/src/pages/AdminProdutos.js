@@ -2,6 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { adminAPI } from '../services/api';
 
+// Função auxiliar para analisar JSON de forma segura
+const parseJsonSeguro = (data) => {
+  if (Array.isArray(data)) return data;
+  if (!data) return [];
+  
+  const stringData = String(data).trim();
+  if (stringData.includes(',') && !stringData.startsWith('[') && !stringData.startsWith('{')) {
+    return stringData.split(',').map(item => item.trim());
+  }
+
+  try {
+    return JSON.parse(stringData);
+  } catch (e) {
+    return [stringData];
+  }
+};
+
 const AdminProdutos = () => {
   const { isAdmin } = useAuth();
   const [produtos, setProdutos] = useState([]);
@@ -51,8 +68,8 @@ const AdminProdutos = () => {
         preco: produto.preco,
         descricao: produto.descricao,
         categoria: produto.categoria,
-        tamanhos: JSON.parse(produto.tamanhos || '[]'),
-        cores: JSON.parse(produto.cores || '[]'),
+        tamanhos: parseJsonSeguro(produto.tamanhos),
+        cores: parseJsonSeguro(produto.cores),
         imagem: produto.imagem,
         estoque: produto.estoque,
         destaque: produto.destaque
@@ -103,6 +120,19 @@ const AdminProdutos = () => {
     }));
   };
 
+  const deletarProduto = async (id) => {
+    if (window.confirm('Tem certeza que deseja excluir este produto?')) {
+      try {
+        await adminAPI.deletarProduto(id);
+        alert('Produto excluído com sucesso!');
+        carregarProdutos();
+      } catch (error) {
+        console.error('Erro ao excluir produto:', error);
+        alert(`Erro ao excluir produto: ${error.response?.data?.error || error.message}`);
+      }
+    }
+  };
+
   if (!isAdmin) {
     return <div className="container">Acesso negado</div>;
   }
@@ -149,6 +179,13 @@ const AdminProdutos = () => {
                       className="btn btn-secondary btn-sm"
                     >
                       Editar
+                    </button>
+                    <button 
+                      onClick={() => deletarProduto(produto.id)}
+                      className="btn btn-danger btn-sm"
+                      style={{marginLeft: '0.5rem'}}
+                    >
+                      Excluir
                     </button>
                   </td>
                 </tr>

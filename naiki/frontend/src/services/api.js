@@ -43,8 +43,10 @@ export const adminAPI = {
   produtos: () => api.get('/admin/produtos'),
   criarProduto: (dados) => api.post('/admin/produtos', dados),
   atualizarProduto: (id, dados) => api.put(`/admin/produtos/${id}`, dados),
+  deletarProduto: (id) => api.delete(`/admin/produtos/${id}`),
   interacoes: () => api.get('/admin/interacoes'),
   responderInteracao: (id, dados) => api.put(`/admin/interacoes/${id}/responder`, dados),
+  deletarInteracao: (id) => api.delete(`/admin/interacoes/${id}`),
 };
 
 export default api;

@@ -88,7 +88,18 @@ const AdminDashboard = () => {
         <div className="chart-container">
           <h3>Interações por Tipo</h3>
           {stats?.interacoesPorTipo?.length > 0 ? (
-            <Doughnut data={interacoesData} />
+            <Doughnut 
+              data={interacoesData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'bottom'
+                  }
+                }
+              }}
+            />
           ) : (
             <p>Nenhuma interação encontrada</p>
           )}
@@ -101,13 +112,15 @@ const AdminDashboard = () => {
               data={produtosData}
               options={{
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                   legend: {
-                    position: 'top',
-                  },
-                  title: {
-                    display: true,
-                    text: 'Top 5 Produtos por Número de Avaliações'
+                    display: false
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true
                   }
                 }
               }}

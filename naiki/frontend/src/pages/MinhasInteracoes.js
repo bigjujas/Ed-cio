@@ -16,7 +16,8 @@ const MinhasInteracoes = () => {
   const carregarInteracoes = async () => {
     try {
       const response = await interacoesAPI.minhas();
-      setInteracoes(response.data);
+      const avaliacoes = response.data.filter(item => item.tipo === 'avaliacao');
+      setInteracoes(avaliacoes);
     } catch (error) {
       console.error('Erro ao carregar interações:', error);
     } finally {
@@ -25,13 +26,7 @@ const MinhasInteracoes = () => {
   };
 
   const getTipoLabel = (tipo) => {
-    const tipos = {
-      'avaliacao': 'Avaliação',
-      'proposta': 'Proposta',
-      'agendamento': 'Agendamento',
-      'reserva': 'Reserva'
-    };
-    return tipos[tipo] || tipo;
+    return 'Avaliação';
   };
 
   const getStatusLabel = (status) => {
@@ -71,7 +66,7 @@ const MinhasInteracoes = () => {
 
   return (
     <div className="container">
-      <h1>Minhas Interações</h1>
+      <h1>Minhas Avaliações</h1>
       
       {interacoes.length > 0 ? (
         <div className="interacoes-lista">
@@ -107,13 +102,6 @@ const MinhasInteracoes = () => {
                   </div>
                 )}
                 
-                {interacao.data_agendamento && (
-                  <div className="agendamento">
-                    <strong>Data agendada:</strong>
-                    <p>{new Date(interacao.data_agendamento).toLocaleString()}</p>
-                  </div>
-                )}
-                
                 {interacao.resposta_admin && (
                   <div className="resposta-admin">
                     <strong>Resposta da administração:</strong>
@@ -126,7 +114,7 @@ const MinhasInteracoes = () => {
         </div>
       ) : (
         <div className="sem-interacoes">
-          <p>Você ainda não fez nenhuma interação.</p>
+          <p>Você ainda não fez nenhuma avaliação.</p>
           <a href="/produtos" className="btn btn-primary">Ver Produtos</a>
         </div>
       )}
