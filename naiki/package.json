@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "NAIKI - Plataforma de tênis",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build",
+    "build": "cd frontend && npm ci && npm run build",
     "start": "cd backend && npm start",
     "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm start\"",
-    "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+    "install-all": "cd frontend && npm install && cd ../backend && npm install"
   },
   "dependencies": {},
   "devDependencies": {
